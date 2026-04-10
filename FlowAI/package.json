@@ -1,0 +1,16 @@
+{
+  "name": "flow-ai-stadium",
+  "version": "1.0.0",
+  "description": "Smart Stadium Application with High-Efficiency PWA Setup",
+  "scripts": {
+    "test": "jest",
+    "start": "npx serve frontend"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "jsdom": "^22.0.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom"
+  }
+}
