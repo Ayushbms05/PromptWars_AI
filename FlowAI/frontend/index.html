@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowAI - Smart Stadium System</title>
+    <meta name="description" content="FlowAI smart stadium app for navigation, food spots, and emergency.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- PWA Manifest could go here -->
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-brand">FlowAI</div>
+        <button id="btn-contrast-toggle" class="nav-btn" style="margin-right: auto; margin-left: 20px;">🌗 Contrast</button>
+        <div class="nav-links">
+            <button class="nav-btn active" data-target="view-dashboard">Overview</button>
+            <button class="nav-btn" data-target="view-live-score" style="color:var(--status-yellow); font-weight:700;">Live Score 🏏</button>
+            <button class="nav-btn" data-target="view-navigate">Navigate</button>
+            <button class="nav-btn" data-target="view-amenities">Amenities</button>
+            <button class="nav-btn emergency-btn" data-target="view-emergency">SOS</button>
+        </div>
+    </nav>
+
+    <div class="dashboard-wrapper">
+        <!-- VIEW 1: DASHBOARD (Original View) -->
+        <main id="view-dashboard" class="app-view active-view">
+            <header class="top-header">
+                <h1>Global Operations</h1>
+                <p class="header-subtitle">Real-Time Stadium Feedback Analytics</p>
+            </header>
+            
+            <div class="dashboard-grid">
+                <!-- Crowd Density Card -->
+                <article class="data-card">
+                    <header class="card-header">
+                        <span class="card-icon">👥</span>
+                        <h2 class="card-title">Crowd Density</h2>
+                    </header>
+                    <div class="card-body">
+                        <span id="crowd-density-value" class="data-value">Medium</span>
+                    </div>
+                    <footer class="card-footer">
+                        <p class="location-label">Main Concourse</p>
+                    </footer>
+                </article>
+
+                <!-- Waiting Time Card -->
+                <article class="data-card">
+                    <header class="card-header">
+                        <span class="card-icon">⏱️</span>
+                        <h2 class="card-title">Wait Times</h2>
+                    </header>
+                    <div class="card-body">
+                        <span id="waiting-time-value" class="data-value">15</span>
+                        <span class="data-unit">mins avg</span>
+                    </div>
+                    <footer class="card-footer">
+                        <p class="location-label">Global Food Stalls</p>
+                    </footer>
+                </article>
+
+                <!-- Navigation Suggestion Card -->
+                <article class="data-card">
+                    <header class="card-header">
+                        <span class="card-icon">🧭</span>
+                        <h2 class="card-title">Smart Alerts</h2>
+                    </header>
+                    <div class="card-body" style="flex-direction: column; align-items: flex-start; justify-content: center; gap: 1.2rem;">
+                        <p id="nav-crowd-message" class="data-nav-text" style="font-size: 1.15rem; font-weight: 500;"></p>
+                        <p id="nav-wait-message" class="data-nav-text" style="font-size: 1.15rem; font-weight: 500;"></p>
+                    </div>
+                    <footer class="card-footer">
+                        <p class="location-label">AI-Powered Insights</p>
+                    </footer>
+                </article>
+
+                <!-- Predictive Heatmap Module -->
+                <article class="data-card" id="heatmap-forecast">
+                    <!-- Controlled by crowd_predict.js -->
+                </article>
+            </div>
+
+            <!-- AI Assistant Section -->
+            <section class="ai-chat-section">
+                <h2 class="chat-title">General Assistant</h2>
+                <div class="chat-input-area">
+                    <input type="text" id="ai-input" placeholder="Ask about global crowd levels, wait times, etc...">
+                    <button id="ask-btn">Ask FlowAI</button>
+                </div>
+                <div id="ai-response-box" class="chat-response hidden">
+                    <p id="ai-response-text"></p>
+                </div>
+            </section>
+        </main>
+
+        <!-- VIEW 2: MY SEAT NAVIGATION -->
+        <main id="view-navigate" class="app-view hidden-view">
+            <header class="top-header">
+                <h1>Seat Navigation</h1>
+                <p class="header-subtitle">Find the optimal route and gate to your seat</p>
+            </header>
+
+            <section class="action-section">
+                <!-- Group Navigation Hub -->
+                <div class="form-container" style="margin-bottom: 2rem; border-color: var(--accent);">
+                    <label>Group Networking</label>
+                    <div class="input-group">
+                        <button id="btn-create-group" class="action-btn" style="flex:none; padding:1rem;">Generate Group Code</button>
+                        <p id="group-status" style="margin: auto 0; font-size: 1.1rem; color: var(--text-muted);"></p>
+                    </div>
+                    <label style="margin-top: 1rem;">Find Friend's Seat</label>
+                    <div class="input-group">
+                        <input type="number" id="friend-seat-input" placeholder="Friend's Seat Number">
+                        <button id="btn-find-friend" class="primary-btn">Navigate to Friend</button>
+                    </div>
+                    <div id="friend-result" class="route-details hidden" style="margin-top: 1.5rem; background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);"></div>
+                </div>
+
+                <!-- Existing Gate Entry Tool -->
+                <div class="form-container">
+                    <label for="seat-input">Enter your ticket seat number (1 - 2000):</label>
+                    <div class="input-group">
+                        <input type="number" id="seat-input" placeholder="e.g. 542" min="1" max="2000">
+                        <button id="btn-find-seat" class="primary-btn">Locate Gate</button>
+                    </div>
+                </div>
+
+                <div id="seat-result" class="result-card hidden">
+                    <h3>Optimal Route Generated</h3>
+                    <div class="route-details">
+                        <div class="route-step">
+                            <span class="step-icon">🚪</span>
+                            <div>
+                                <h4>Suggested Entry</h4>
+                                <p id="result-gate">Gate B</p>
+                            </div>
+                        </div>
+                        <div class="route-step">
+                            <span class="step-icon">🚦</span>
+                            <div>
+                                <h4>Live Condition</h4>
+                                <p id="result-condition">Heavy Crowd - Alternative route assigned.</p>
+                            </div>
+                        </div>
+                        <div class="route-step">
+                            <span class="step-icon">📍</span>
+                            <div>
+                                <h4>Path to Seat</h4>
+                                <p id="result-path">Take Escalator 2 to Level B, Sector 4.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- VIEW 3: AMENITIES (Food/Washroom) -->
+        <main id="view-amenities" class="app-view hidden-view">
+            <header class="top-header">
+                <h1>Live Amenities</h1>
+                <p class="header-subtitle">Find nearest and fastest food spots or washrooms</p>
+            </header>
+
+            <section class="action-section">
+                <div class="form-container">
+                    <label for="amenity-seat-input">Where are you currently sitting?</label>
+                    <input type="number" id="amenity-seat-input" placeholder="Enter seat number (1-2000)" min="1" max="2000" class="full-input">
+                    
+                    <div class="button-group">
+                        <button id="btn-find-food" class="action-btn">🍔 Find Food</button>
+                        <button id="btn-find-washroom" class="action-btn">🚻 Find Washroom</button>
+                    </div>
+                </div>
+
+                <div id="amenity-result" class="result-card hidden">
+                    <div class="amenity-details">
+                        <div class="amenity-header">
+                            <span class="amenity-icon" id="amenity-icon">🍔</span>
+                            <h3 id="amenity-title">Nearest Food Stall</h3>
+                        </div>
+                        
+                        <div class="amenity-stats">
+                            <div class="stat-box">
+                                <span>Suggested Location</span>
+                                <strong id="amenity-location" class="highlight-text">Stall 4 - Sector B</strong>
+                            </div>
+                            <div class="stat-box">
+                                <span>Current Status</span>
+                                <strong id="amenity-status" class="status-low">5 min wait</strong>
+                            </div>
+                        </div>
+                        <p id="amenity-directions" class="directions-text">Walk down the stairs to your left, it's right past Gate B.</p>
+                        
+                        <!-- NEW CLICK AND COLLECT MODULE -->
+                        <button id="btn-order-ahead" class="primary-btn" style="margin-top: 2rem; width:100%; border:2px solid var(--accent); display:none;">📱 Order Ahead (Click & Collect)</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- VIEW 5: LIVE SCORE -->
+        <main id="view-live-score" class="app-view hidden-view">
+            <header class="top-header">
+                <h1>Live Match Centre</h1>
+                <p class="header-subtitle">Real-time updates directly from the pitch</p>
+            </header>
+
+            <section class="action-section" style="max-width: 800px;">
+                <div class="form-container" style="text-align: center; border-top: 4px solid var(--accent);">
+                    <h2 style="font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 2rem;">India vs Australia (T20)</h2>
+                    
+                    <div style="display: flex; justify-content: center; align-items: baseline; gap: 1rem; margin-bottom: 2rem;">
+                        <div style="text-align: right;">
+                            <h3 style="font-size: 2.2rem; margin-bottom: 0.2rem;">IND</h3>
+                            <p style="color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Batting</p>
+                        </div>
+                        <div style="font-size: 5.5rem; font-weight: 800; line-height: 1;">
+                            <span id="score-runs">0</span><span style="font-size: 3.5rem; color:var(--glass-border); font-weight:400; padding:0 0.5rem;">/</span><span id="score-wickets" style="font-size: 4rem;">0</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-around; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--glass-border);">
+                        <div>
+                            <span style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Overs</span>
+                            <div style="font-size: 2rem; font-weight: 700;" id="score-overs">0.0</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Run Rate</span>
+                            <div style="font-size: 2rem; font-weight: 700;" id="score-crr">0.00</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Target</span>
+                            <div style="font-size: 2rem; font-weight: 700;">198</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: left; padding-top: 1rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--text-main); font-size: 1.1rem;">Recent Deliveries:</h4>
+                        <div id="recent-overs" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- VIEW 4: EMERGENCY -->
+        <main id="view-emergency" class="app-view hidden-view">
+            <header class="top-header emergency-header">
+                <h1>Emergency SOS</h1>
+                <p class="header-subtitle">Request immediate high-priority assistance</p>
+            </header>
+
+            <section class="action-section emergency-section">
+                <div class="form-container emergency-form">
+                    <label>Nature of Emergency</label>
+                    <select id="emergency-type" class="full-input">
+                        <option value="medical">Medical Emergency</option>
+                        <option value="security">Security Incident</option>
+                        <option value="fire">Fire / Hazard</option>
+                        <option value="other">Other</option>
+                    </select>
+
+                    <label>Your Current Location / Seat</label>
+                    <input type="text" id="emergency-seat" placeholder="Seat Number or strict Location" class="full-input">
+
+                    <button id="btn-submit-emergency" class="danger-btn">⚠️ DISPATCH AUTHORITIES NOW</button>
+                </div>
+
+                <div id="emergency-result" class="result-card danger-result hidden">
+                    <h3 class="blink-text">SOS Received!</h3>
+                    <div class="emergency-instructions" id="emergency-instructions">
+                        Authorities have been dispatched to your location. Please stay calm and remain where you are.
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="script.js"></script>
+    <script src="crowd_predict.js"></script>
+    <script src="navigation_logic.js"></script>
+    <script src="fnb_orders.js"></script>
+    <script src="live_score.js"></script>
+</body>
+</html>
