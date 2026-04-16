@@ -6,43 +6,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowAI - Smart Stadium System</title>
     <meta name="description" content="FlowAI smart stadium app for navigation, food spots, and emergency.">
+    <!-- Dynamic Google Services Loader using Secret Store -->
+    <script type="module">
+        import { GOOGLE_MAPS_API_KEY, FIREBASE_CONFIG } from './config.js';
+        
+        // 1. Firebase Object Loader
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-analytics.js";
+        try {
+            const app = initializeApp(FIREBASE_CONFIG);
+            getAnalytics(app);
+            window._flowAiFirebaseApp = app; 
+        } catch(e) { console.error("Firebase SDK Offline"); }
+
+        // 2. Dynamic Maps API Loader
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=Function.prototype`;
+        script.async = true;
+        
+        // Broadcast custom events mapped by the internal script.js MapManager
+        script.onload = () => document.dispatchEvent(new Event('GoogleMapsLoaded'));
+        script.onerror = () => document.dispatchEvent(new Event('GoogleMapsFailed'));
+        document.head.appendChild(script);
+    </script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- PWA Manifest could go here -->
 </head>
 
 <body>
-    <nav class="top-nav">
-        <div class="nav-brand">FlowAI</div>
-        <button id="btn-contrast-toggle" class="nav-btn" style="margin-right: auto; margin-left: 20px;">🌗
+    <nav class="top-nav" role="navigation" aria-label="Main Navigation">
+        <div class="nav-brand" tabindex="0">FlowAI</div>
+        <button id="btn-contrast-toggle" class="nav-btn" aria-label="Toggle High Contrast Mode" aria-pressed="false" style="margin-right: auto; margin-left: 20px;">🌗
             Contrast</button>
         <div class="nav-links">
-            <button class="nav-btn active" data-target="view-dashboard">Overview</button>
+            <button class="nav-btn active" data-target="view-dashboard" aria-label="Open Dashboard">Overview</button>
             <button class="nav-btn" data-target="view-live-score"
-                style="color:var(--status-yellow); font-weight:700;">Live Score 🏏</button>
-            <button class="nav-btn" data-target="view-navigate">Navigate</button>
-            <button class="nav-btn" data-target="view-amenities">Amenities</button>
-            <button class="nav-btn emergency-btn" data-target="view-emergency">SOS</button>
+                style="color:var(--status-yellow); font-weight:700;" aria-label="Open Live Score">Live Score 🏏</button>
+            <button class="nav-btn" data-target="view-navigate" aria-label="Open Seat Navigation">Navigate</button>
+            <button class="nav-btn" data-target="view-amenities" aria-label="Open Amenities">Amenities</button>
+            <button class="nav-btn emergency-btn" data-target="view-emergency" aria-label="Alert SOS Panel">SOS</button>
         </div>
     </nav>
 
     <div class="dashboard-wrapper">
-        <!-- VIEW 1: DASHBOARD (Original View) -->
-        <main id="view-dashboard" class="app-view active-view">
+        <!-- VIEW 1: DASHBOARD -->
+        <main id="view-dashboard" class="app-view active-view" role="main" aria-label="Dashboard Overview">
             <header class="top-header">
-                <h1>Global Operations</h1>
-                <p class="header-subtitle">Real-Time Stadium Feedback Analytics</p>
+                <h1 tabindex="0">Global Operations</h1>
+                <p class="header-subtitle" tabindex="0">Real-Time Stadium Feedback Analytics</p>
             </header>
 
             <div class="dashboard-grid">
+                <!-- Map UI Container -->
+                <article class="data-card" style="grid-column: 1 / -1; height: 350px; padding: 0.5rem;" aria-label="Google Maps Routing Element">
+                     <div id="google-map-container" style="width: 100%; height: 100%; border-radius: 8px;"></div>
+                </article>
+
                 <!-- Crowd Density Card -->
-                <article class="data-card">
+                <article class="data-card" tabindex="0" aria-labelledby="crowd-density-title">
                     <header class="card-header">
-                        <span class="card-icon">👥</span>
-                        <h2 class="card-title">Crowd Density</h2>
+                        <span class="card-icon" aria-hidden="true">👥</span>
+                        <h2 class="card-title" id="crowd-density-title">Crowd Density</h2>
                     </header>
                     <div class="card-body">
-                        <span id="crowd-density-value" class="data-value">Medium</span>
+                        <span id="crowd-density-value" class="data-value" aria-live="polite">Medium</span>
                     </div>
                     <footer class="card-footer">
                         <p class="location-label">Main Concourse</p>
@@ -50,31 +78,28 @@
                 </article>
 
                 <!-- Waiting Time Card -->
-                <article class="data-card">
+                <article class="data-card" tabindex="0" aria-labelledby="wait-time-title">
                     <header class="card-header">
-                        <span class="card-icon">⏱️</span>
-                        <h2 class="card-title">Wait Times</h2>
+                        <span class="card-icon" aria-hidden="true">⏱️</span>
+                        <h2 class="card-title" id="wait-time-title">Wait Times</h2>
                     </header>
                     <div class="card-body">
-                        <span id="waiting-time-value" class="data-value">15</span>
+                        <span id="waiting-time-value" class="data-value" aria-live="polite">15</span>
                         <span class="data-unit">mins avg</span>
                     </div>
-                    <footer class="card-footer">
-                        <p class="location-label">Global Food Stalls</p>
-                    </footer>
                 </article>
 
                 <!-- Navigation Suggestion Card -->
-                <article class="data-card">
+                <article class="data-card" tabindex="0" aria-labelledby="smart-alerts-title">
                     <header class="card-header">
-                        <span class="card-icon">🧭</span>
-                        <h2 class="card-title">Smart Alerts</h2>
+                        <span class="card-icon" aria-hidden="true">🧭</span>
+                        <h2 class="card-title" id="smart-alerts-title">Smart Alerts</h2>
                     </header>
                     <div class="card-body"
                         style="flex-direction: column; align-items: flex-start; justify-content: center; gap: 1.2rem;">
-                        <p id="nav-crowd-message" class="data-nav-text" style="font-size: 1.15rem; font-weight: 500;">
+                        <p id="nav-crowd-message" class="data-nav-text" style="font-size: 1.15rem; font-weight: 500;" aria-live="polite">
                         </p>
-                        <p id="nav-wait-message" class="data-nav-text" style="font-size: 1.15rem; font-weight: 500;">
+                        <p id="nav-wait-message" class="data-nav-text" style="font-size: 1.15rem; font-weight: 500;" aria-live="polite">
                         </p>
                     </div>
                     <footer class="card-footer">
@@ -83,81 +108,74 @@
                 </article>
 
                 <!-- Predictive Heatmap Module -->
-                <article class="data-card" id="heatmap-forecast">
+                <article class="data-card" id="heatmap-forecast" tabindex="0" aria-label="Wait Time Heatmap">
                     <!-- Controlled by crowd_predict.js -->
                 </article>
             </div>
 
             <!-- AI Assistant Section -->
-            <section class="ai-chat-section">
-                <h2 class="chat-title">General Assistant</h2>
+            <section class="ai-chat-section" aria-label="AI Assistant Panel">
+                <h2 class="chat-title" tabindex="0">General Assistant</h2>
                 <div class="chat-input-area">
-                    <input type="text" id="ai-input" placeholder="Ask about global crowd levels, wait times, etc...">
-                    <button id="ask-btn">Ask FlowAI</button>
+                    <input type="text" id="ai-input" aria-label="Ask about global crowd levels, wait times" placeholder="Ask about global crowd levels, wait times...">
+                    <button id="ask-btn" aria-label="Submit Assistant Question">Ask FlowAI</button>
                 </div>
-                <div id="ai-response-box" class="chat-response hidden">
+                <div id="ai-response-box" class="chat-response hidden" aria-live="polite" role="status">
                     <p id="ai-response-text"></p>
                 </div>
             </section>
         </main>
 
         <!-- VIEW 2: MY SEAT NAVIGATION -->
-        <main id="view-navigate" class="app-view hidden-view">
+        <main id="view-navigate" class="app-view hidden-view" role="region" aria-label="Seat Navigation Module">
             <header class="top-header">
-                <h1>Seat Navigation</h1>
-                <p class="header-subtitle">Find the optimal route and gate to your seat</p>
+                <h1 tabindex="0">Seat Navigation</h1>
+                <p class="header-subtitle" tabindex="0">Find the optimal route and gate to your seat</p>
             </header>
 
             <section class="action-section">
                 <!-- Group Navigation Hub -->
                 <div class="form-container" style="margin-bottom: 2rem; border-color: var(--accent);">
-                    <label>Group Networking</label>
+                    <label tabindex="0">Group Networking</label>
                     <div class="input-group">
-                        <button id="btn-create-group" class="action-btn" style="flex:none; padding:1rem;">Generate Group
+                        <button id="btn-create-group" class="action-btn" style="flex:none; padding:1rem;" aria-label="Generate Connection Code">Generate Group
                             Code</button>
-                        <p id="group-status" style="margin: auto 0; font-size: 1.1rem; color: var(--text-muted);"></p>
+                        <p id="group-status" style="margin: auto 0; font-size: 1.1rem; color: var(--text-muted);" aria-live="polite"></p>
                     </div>
-                    <label style="margin-top: 1rem;">Find Friend's Seat</label>
+                    <label style="margin-top: 1rem;" tabindex="0">Find Friend's Seat</label>
                     <div class="input-group">
-                        <input type="number" id="friend-seat-input" placeholder="Friend's Seat Number">
-                        <button id="btn-find-friend" class="primary-btn">Navigate to Friend</button>
+                        <input type="number" id="friend-seat-input" aria-label="Input friend's seat" placeholder="Friend's Seat Number">
+                        <button id="btn-find-friend" class="primary-btn" aria-label="Submit Friend Location">Navigate to Friend</button>
                     </div>
-                    <div id="friend-result" class="route-details hidden"
+                    <div id="friend-result" class="route-details hidden" aria-live="polite" role="alert"
                         style="margin-top: 1.5rem; background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);">
                     </div>
                 </div>
 
                 <!-- Existing Gate Entry Tool -->
                 <div class="form-container">
-                    <label for="seat-input">Enter your ticket seat number (1 - 2000):</label>
+                    <label for="seat-input" tabindex="0">Enter your ticket seat number (1 - 2000):</label>
                     <div class="input-group">
-                        <input type="number" id="seat-input" placeholder="e.g. 542" min="1" max="2000">
-                        <button id="btn-find-seat" class="primary-btn">Locate Gate</button>
+                        <input type="number" id="seat-input" placeholder="e.g. 542" min="1" max="2000" aria-label="Primary Ticket Input">
+                        <button id="btn-find-seat" class="primary-btn" aria-label="Calculate Gate Access">Locate Gate</button>
                     </div>
                 </div>
 
-                <div id="seat-result" class="result-card hidden">
-                    <h3>Optimal Route Generated</h3>
+                <div id="seat-result" class="result-card hidden" aria-live="assertive">
+                    <h3 tabindex="0">Optimal Route Generated</h3>
                     <div class="route-details">
                         <div class="route-step">
-                            <span class="step-icon">🚪</span>
+                            <span class="step-icon" aria-hidden="true">🚪</span>
                             <div>
-                                <h4>Suggested Entry</h4>
+                                <h4 tabindex="0">Suggested Entry</h4>
                                 <p id="result-gate">Gate B</p>
                             </div>
                         </div>
                         <div class="route-step">
-                            <span class="step-icon">🚦</span>
+                            <span class="step-icon" aria-hidden="true">🚦</span>
                             <div>
-                                <h4>Live Condition</h4>
+                                <h4 tabindex="0">Live Condition</h4>
                                 <p id="result-condition">Heavy Crowd - Alternative route assigned.</p>
-                            </div>
-                        </div>
-                        <div class="route-step">
-                            <span class="step-icon">📍</span>
-                            <div>
-                                <h4>Path to Seat</h4>
-                                <p id="result-path">Take Escalator 2 to Level B, Sector 4.</p>
                             </div>
                         </div>
                     </div>
@@ -166,105 +184,77 @@
         </main>
 
         <!-- VIEW 3: AMENITIES (Food/Washroom) -->
-        <main id="view-amenities" class="app-view hidden-view">
+        <main id="view-amenities" class="app-view hidden-view" role="region" aria-label="Amenities Locator">
             <header class="top-header">
-                <h1>Live Amenities</h1>
-                <p class="header-subtitle">Find nearest and fastest food spots or washrooms</p>
+                <h1 tabindex="0">Live Amenities</h1>
+                <p class="header-subtitle" tabindex="0">Find nearest and fastest food spots or washrooms</p>
             </header>
 
             <section class="action-section">
                 <div class="form-container">
-                    <label for="amenity-seat-input">Where are you currently sitting?</label>
-                    <input type="number" id="amenity-seat-input" placeholder="Enter seat number (1-2000)" min="1"
-                        max="2000" class="full-input">
+                    <label for="amenity-seat-input" tabindex="0">Where are you currently sitting?</label>
+                    <input type="number" id="amenity-seat-input" placeholder="Enter seat number (1-2000)" min="1" max="2000" class="full-input">
 
                     <div class="button-group">
-                        <button id="btn-find-food" class="action-btn">🍔 Find Food</button>
-                        <button id="btn-find-washroom" class="action-btn">🚻 Find Washroom</button>
+                        <button id="btn-find-food" class="action-btn" aria-label="Find Food Stalls">🍔 Find Food</button>
+                        <button id="btn-find-washroom" class="action-btn" aria-label="Find Washrooms">🚻 Find Washroom</button>
                     </div>
                 </div>
 
-                <div id="amenity-result" class="result-card hidden">
+                <div id="amenity-result" class="result-card hidden" aria-live="polite">
                     <div class="amenity-details">
                         <div class="amenity-header">
-                            <span class="amenity-icon" id="amenity-icon">🍔</span>
-                            <h3 id="amenity-title">Nearest Food Stall</h3>
+                            <span class="amenity-icon" id="amenity-icon" aria-hidden="true">🍔</span>
+                            <h3 id="amenity-title" tabindex="0">Nearest Food Stall</h3>
                         </div>
 
                         <div class="amenity-stats">
-                            <div class="stat-box">
+                            <div class="stat-box" tabindex="0">
                                 <span>Suggested Location</span>
                                 <strong id="amenity-location" class="highlight-text">Stall 4 - Sector B</strong>
                             </div>
-                            <div class="stat-box">
+                            <div class="stat-box" tabindex="0">
                                 <span>Current Status</span>
                                 <strong id="amenity-status" class="status-low">5 min wait</strong>
                             </div>
                         </div>
-                        <p id="amenity-directions" class="directions-text">Walk down the stairs to your left, it's right
-                            past Gate B.</p>
-
-                        <!-- NEW CLICK AND COLLECT MODULE -->
-                        <button id="btn-order-ahead" class="primary-btn"
-                            style="margin-top: 2rem; width:100%; border:2px solid var(--accent); display:none;">📱 Order
-                            Ahead (Click & Collect)</button>
+                        <p id="amenity-directions" class="directions-text" tabindex="0">Walk down the stairs to your left, it's right past Gate B.</p>
+                        <button id="btn-order-ahead" class="primary-btn" aria-label="Order Pick Up" style="margin-top: 2rem; width:100%; border:2px solid var(--accent); display:none;">📱 Order Ahead (Click & Collect)</button>
                     </div>
                 </div>
             </section>
         </main>
 
         <!-- VIEW 5: LIVE SCORE -->
-        <main id="view-live-score" class="app-view hidden-view">
+        <main id="view-live-score" class="app-view hidden-view" role="region" aria-label="Match Simulator">
             <header class="top-header">
-                <h1>Live Match Centre</h1>
-                <p class="header-subtitle">Real-time updates directly from the pitch</p>
+                <h1 tabindex="0">Live Match Centre</h1>
             </header>
-
             <section class="action-section" style="max-width: 800px;">
-                <div class="form-container" style="text-align: center; border-top: 4px solid var(--accent);">
-                    <h2
-                        style="font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 2rem;">
-                        India vs Australia (T20)</h2>
-
-                    <div
-                        style="display: flex; justify-content: center; align-items: baseline; gap: 1rem; margin-bottom: 2rem;">
-                        <div style="text-align: right;">
+                <div class="form-container" style="text-align: center; border-top: 4px solid var(--accent);" aria-live="polite">
+                    <h2 tabindex="0" style="font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 2rem;">India vs Australia (T20)</h2>
+                    <div style="display: flex; justify-content: center; align-items: baseline; gap: 1rem; margin-bottom: 2rem;">
+                        <div style="text-align: right;" tabindex="0">
                             <h3 style="font-size: 2.2rem; margin-bottom: 0.2rem;">IND</h3>
-                            <p style="color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Batting
-                            </p>
+                            <p style="color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Batting</p>
                         </div>
-                        <div style="font-size: 5.5rem; font-weight: 800; line-height: 1;">
-                            <span id="score-runs">0</span><span
-                                style="font-size: 3.5rem; color:var(--glass-border); font-weight:400; padding:0 0.5rem;">/</span><span
-                                id="score-wickets" style="font-size: 4rem;">0</span>
+                        <div style="font-size: 5.5rem; font-weight: 800; line-height: 1;" aria-label="Live Match Runs">
+                            <span id="score-runs">0</span><span style="font-size: 3.5rem; color:var(--glass-border); font-weight:400; padding:0 0.5rem;">/</span><span id="score-wickets" style="font-size: 4rem;">0</span>
                         </div>
                     </div>
-
-                    <div
-                        style="display: flex; justify-content: space-around; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--glass-border);">
-                        <div>
-                            <span
-                                style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Overs</span>
+                    <div style="display: flex; justify-content: space-around; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--glass-border);">
+                        <div tabindex="0">
+                            <span style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Overs</span>
                             <div style="font-size: 2rem; font-weight: 700;" id="score-overs">0.0</div>
                         </div>
-                        <div>
-                            <span
-                                style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Run
-                                Rate</span>
+                        <div tabindex="0">
+                            <span style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Run Rate</span>
                             <div style="font-size: 2rem; font-weight: 700;" id="score-crr">0.00</div>
                         </div>
-                        <div>
-                            <span
-                                style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Target</span>
-                            <div style="font-size: 2rem; font-weight: 700;">198</div>
-                        </div>
                     </div>
-
                     <div style="text-align: left; padding-top: 1rem;">
-                        <h4 style="margin-bottom: 1rem; color: var(--text-main); font-size: 1.1rem;">Recent Deliveries:
-                        </h4>
-                        <div id="recent-overs" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                            <!-- Populated by JS -->
+                        <h4 tabindex="0" style="margin-bottom: 1rem; color: var(--text-main); font-size: 1.1rem;">Recent Deliveries:</h4>
+                        <div id="recent-overs" style="display: flex; gap: 0.75rem; flex-wrap: wrap;" aria-label="Ball by Ball visual tracker">
                         </div>
                     </div>
                 </div>
@@ -272,32 +262,31 @@
         </main>
 
         <!-- VIEW 4: EMERGENCY -->
-        <main id="view-emergency" class="app-view hidden-view">
+        <main id="view-emergency" class="app-view hidden-view" role="region" aria-label="Emergency Request Panel">
             <header class="top-header emergency-header">
-                <h1>Emergency SOS</h1>
-                <p class="header-subtitle">Request immediate high-priority assistance</p>
+                <h1 tabindex="0">Emergency SOS</h1>
+                <p class="header-subtitle" tabindex="0">Request immediate high-priority assistance</p>
             </header>
 
             <section class="action-section emergency-section">
                 <div class="form-container emergency-form">
-                    <label>Nature of Emergency</label>
-                    <select id="emergency-type" class="full-input">
+                    <label for="emergency-type" tabindex="0">Nature of Emergency</label>
+                    <select id="emergency-type" class="full-input" aria-label="Select condition">
                         <option value="medical">Medical Emergency</option>
                         <option value="security">Security Incident</option>
                         <option value="fire">Fire / Hazard</option>
                         <option value="other">Other</option>
                     </select>
 
-                    <label>Your Current Location / Seat</label>
-                    <input type="text" id="emergency-seat" placeholder="Seat Number or strict Location"
-                        class="full-input">
+                    <label for="emergency-seat" tabindex="0">Your Current Location / Seat</label>
+                    <input type="text" id="emergency-seat" placeholder="Seat Number or strict Location" class="full-input" aria-label="Provide location for authorities">
 
-                    <button id="btn-submit-emergency" class="danger-btn">⚠️ DISPATCH AUTHORITIES NOW</button>
+                    <button id="btn-submit-emergency" class="danger-btn" aria-label="Dispatch Final Call">⚠️ DISPATCH AUTHORITIES NOW</button>
                 </div>
 
-                <div id="emergency-result" class="result-card danger-result hidden">
-                    <h3 class="blink-text">SOS Received!</h3>
-                    <div class="emergency-instructions" id="emergency-instructions">
+                <div id="emergency-result" class="result-card danger-result hidden" aria-live="assertive" role="alert">
+                    <h3 class="blink-text" tabindex="0">SOS Received!</h3>
+                    <div class="emergency-instructions" id="emergency-instructions" tabindex="0">
                         Authorities have been dispatched to your location. Please stay calm and remain where you are.
                     </div>
                 </div>
@@ -305,11 +294,12 @@
         </main>
     </div>
 
-    <script src="script.js"></script>
-    <script src="crowd_predict.js"></script>
-    <script src="navigation_logic.js"></script>
-    <script src="fnb_orders.js"></script>
-    <script src="live_score.js"></script>
+    <!-- Convert all Logic Architecture to ES6 Modules -->
+    <script type="module" src="script.js"></script>
+    <script type="module" src="crowd_predict.js"></script>
+    <script type="module" src="navigation_logic.js"></script>
+    <script type="module" src="fnb_orders.js"></script>
+    <script type="module" src="live_score.js"></script>
 </body>
 
 </html>

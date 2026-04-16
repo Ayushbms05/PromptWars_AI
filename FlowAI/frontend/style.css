@@ -319,3 +319,7 @@ body.high-contrast .app-view { background: #000; }
 body.high-contrast .top-nav { background: #000; border-bottom: 2px solid #fff;}
 body.high-contrast .nav-btn.active { background: #fff !important; color: #000 !important; border: 2px solid #fff;}
 
+/* WCAG 2.1 Focus Rings */
+*:focus, *:focus-visible { outline: 3px solid var(--accent) !important; outline-offset: 4px; }
+.high-contrast *:focus { outline: 4px solid #FFD700 !important; background: #111 !important; color: #FFF !important; }
+
